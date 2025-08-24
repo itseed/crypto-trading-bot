@@ -1,0 +1,10 @@
+version: "3.9"
+services:
+  crypto-bot:
+    build: .
+    env_file: .env
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+      - ./paper_state.json:/app/paper_state.json
+      - ./bot.log:/app/bot.log
+    restart: unless-stopped

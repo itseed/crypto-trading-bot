@@ -1,0 +1,6 @@
+ccxt>=4.0.0
+pandas>=2.0.0
+pandas_ta>=0.3.14b
+python-dotenv>=1.0.0
+PyYAML>=6.0.0
+tenacity>=8.2.3

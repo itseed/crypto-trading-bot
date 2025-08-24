@@ -1,0 +1,26 @@
+mode: paper  # paper | live
+exchange: binance
+symbol: SHIB/USDT  # Changed from BTC/USDT to ETH/USDT
+timeframe: 5m     # Changed from 15m to 1h
+lookback_bars: 200
+poll_interval_sec: 30
+
+risk:
+  equity: 10000          # ทุนจำลองสำหรับ paper mode (USDT)
+  risk_per_trade: 0.01   # 1% ของ equity ต่อการเทรดหนึ่งครั้ง
+  fee_rate: 0.001        # ค่าธรรมเนียมคร่าวๆ 0.1%
+  min_notional: 10       # สั่งออเดอร์ไม่น้อยกว่า 10 USDT
+
+strategy:
+  ema_fast: 10
+  ema_slow: 20
+  rsi_period: 14
+  rsi_buy_below: 70
+  rsi_sell_above: 30
+  atr_period: 14
+  sl_atr: 2.0            # คำนวณ stop-loss ~ 2*ATR
+  tp_rr: 1.5             # take-profit = RR 1:1.5 เทียบกับความเสี่ยง
+
+logs:
+  level: INFO            # DEBUG | INFO | WARNING | ERROR
+  file: bot.log

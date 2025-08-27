@@ -1,7 +1,8 @@
 import pandas as pd
+from strategies.base_strategy import BaseStrategy
 
-class EMARsiStrategy:
-    def __init__(self, ema_fast: int, ema_slow: int, rsi_period: int, rsi_buy_below: float, rsi_sell_above: float, sl_atr: float, tp_rr: float):
+class EMARsiStrategy(BaseStrategy):
+    def __init__(self, ema_fast: int, ema_slow: int, rsi_period: int, rsi_buy_below: float, rsi_sell_above: float, atr_period:int, sl_atr: float, tp_rr: float):
         self.ema_fast = ema_fast
         self.ema_slow = ema_slow
         self.rsi_period = rsi_period
@@ -9,6 +10,16 @@ class EMARsiStrategy:
         self.rsi_sell_above = rsi_sell_above
         self.sl_atr = sl_atr
         self.tp_rr = tp_rr
+        self.atr_period = atr_period
+
+    @property
+    def indicator_params(self):
+        return {
+            "ema_fast": self.ema_fast,
+            "ema_slow": self.ema_slow,
+            "rsi_period": self.rsi_period,
+            "atr_period": self.atr_period
+        }
 
     def signal(self, df: pd.DataFrame):
         # ใช้สัญญาณ cross + RSI filter

@@ -1,9 +1,15 @@
 import pandas as pd
 import numpy as np
+from strategies.base_strategy import BaseStrategy
 
-class SimplePriceStrategy:
+class SimplePriceStrategy(BaseStrategy):
     def __init__(self, period: int = 5):
         self.period = period
+
+    @property
+    def indicator_params(self):
+        # Simple strategy doesn't require additional indicators
+        return {}
 
     def signal(self, df: pd.DataFrame):
         # Simple strategy: buy when price crosses above moving average, sell when it crosses below
@@ -26,3 +32,7 @@ class SimplePriceStrategy:
         if price_prev >= sma_prev and price_now < sma_now:
             return "sell"
         return None
+
+    def stops(self, entry: float, atr: float):
+        # Simple strategy doesn't use stops, returning default values
+        return entry * 0.95, entry * 1.05  # 5% stop loss and take profit

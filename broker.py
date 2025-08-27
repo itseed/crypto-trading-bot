@@ -1,6 +1,8 @@
 import json
 import os
 from typing import Optional
+import ccxt
+from tenacity import retry, stop_after_attempt, wait_fixed
 
 class PaperBroker:
     def __init__(self, equity: float, fee_rate: float, state_path: str = "paper_state.json"):
@@ -63,9 +65,6 @@ class PaperBroker:
         self._save()
         return {"side": "sell", "price": price, "qty": qty_float, "fee": fee, "pnl": pnl}
 
-# โครงสำหรับ LiveBroker ผ่าน CCXT (สาธิต ไม่ผูก exchange ใด ๆ เฉพาะ)
-import ccxt
-
 class LiveBroker:
     def __init__(self, exchange_id: str, api_key: str, api_secret: str, use_testnet: bool = False):
         ex_class = getattr(ccxt, exchange_id)
@@ -78,11 +77,26 @@ class LiveBroker:
         if use_testnet and hasattr(self.exchange, "urls") and "test" in self.exchange.urls:
             self.exchange.urls["api"] = self.exchange.urls["test"]
 
+    @retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
     def market_buy(self, symbol: str, amount: float):
         return self.exchange.create_market_buy_order(symbol, amount)
 
+    @retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
     def market_sell(self, symbol: str, amount: float):
         return self.exchange.create_market_sell_order(symbol, amount)
 
+    @retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
+    def limit_buy(self, symbol: str, amount: float, price: float):
+        return self.exchange.create_limit_buy_order(symbol, amount, price)
+
+    @retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
+    def limit_sell(self, symbol: str, amount: float, price: float):
+        return self.exchange.create_limit_sell_order(symbol, amount, price)
+
+    @retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
+    def stop_loss(self, symbol: str, amount: float, price: float):
+        return self.exchange.create_order(symbol, 'stop-loss', 'sell', amount, price)
+
+    @retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
     def fetch_ohlcv(self, symbol: str, timeframe: str, limit: int = 200):
         return self.exchange.fetch_ohlcv(symbol, timeframe=timeframe, limit=limit)

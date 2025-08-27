@@ -8,16 +8,47 @@
 ```
 crypto-bot/
 ├─ bot.py                # main loop รันบอท
-├─ strategy.py           # กลยุทธ์ (EMA cross + RSI filter)
+├─ strategies/           # กลยุทธ์
+│  ├─ base_strategy.py
+│  └─ ema_rsi_strategy.py
 ├─ broker.py             # Paper broker + Live (ผ่าน CCXT)
 ├─ data.py               # ดึง/แปลง OHLCV + indicators
 ├─ backtest.py           # backtest ง่ายๆ จากไฟล์ OHLCV
+├─ backtesting_improvement.py # backtest พร้อม performance metrics และ visualization
+├─ web.py                # Web interface (Flask)
 ├─ config.yaml           # การตั้งค่า (symbol, timeframe, risk ฯลฯ)
 ├─ .env.sample           # ตัวอย่างคีย์ API
 ├─ requirements.txt      # ไลบรารีที่ต้องใช้
 ├─ Dockerfile            # สร้างคอนเทนเนอร์
 └─ docker-compose.yml    # รันด้วย compose + .env
 ```
+
+---
+
+## Web Interface
+
+To use the web interface, run the following command:
+
+```
+python web.py
+```
+
+This will start a Flask web server on port 5000. You can then access the web interface by opening a web browser and navigating to `http://localhost:5000`.
+
+The web interface provides the following functionality:
+
+*   **/status**: View the bot's status.
+*   **/start**: Start the bot.
+*   **/stop**: Stop the bot.
+*   **/config**: View and update the bot's configuration.
+
+### API Endpoints
+
+*   `GET /status`: Returns the current status of the bot.
+*   `POST /start`: Starts the bot.
+*   `POST /stop`: Stops the bot.
+*   `GET /config`: Returns the current configuration of the bot.
+*   `POST /config`: Updates the configuration of the bot.
 
 ---
 
@@ -29,6 +60,8 @@ pandas_ta>=0.3.14b
 python-dotenv>=1.0.0
 PyYAML>=6.0.0
 tenacity>=8.2.3
+matplotlib>=3.0.0
+Flask>=2.0.0
 ```
 
 ---
@@ -60,6 +93,7 @@ risk:
   min_notional: 10       # สั่งออเดอร์ไม่น้อยกว่า 10 USDT
 
 strategy:
+  name: ema_rsi
   ema_fast: 20
   ema_slow: 50
   rsi_period: 14
@@ -104,46 +138,6 @@ def last_row(df: pd.DataFrame) -> Optional[pd.Series]:
     if df is None or len(df) == 0:
         return None
     return df.iloc[-1]
-```
-
----
-
-## strategy.py
-```python
-import pandas as pd
-
-class EMARsiStrategy:
-    def __init__(self, ema_fast: int, ema_slow: int, rsi_period: int, rsi_buy_below: float, rsi_sell_above: float, sl_atr: float, tp_rr: float):
-        self.ema_fast = ema_fast
-        self.ema_slow = ema_slow
-        self.rsi_period = rsi_period
-        self.rsi_buy_below = rsi_buy_below
-        self.rsi_sell_above = rsi_sell_above
-        self.sl_atr = sl_atr
-        self.tp_rr = tp_rr
-
-    def signal(self, df: pd.DataFrame):
-        # ใช้สัญญาณ cross + RSI filter
-        if len(df) < 3:
-            return None
-        fast = df[f"ema_{self.ema_fast}"]
-        slow = df[f"ema_{self.ema_slow}"]
-        rsi = df["rsi"]
-        # cross ล่าสุดและก่อนหน้า
-        fast_prev, fast_now = float(fast.iloc[-2]), float(fast.iloc[-1])
-        slow_prev, slow_now = float(slow.iloc[-2]), float(slow.iloc[-1])
-        rsi_now = float(rsi.iloc[-1])
-
-        if fast_prev <= slow_prev and fast_now > slow_now and rsi_now <= self.rsi_buy_below:
-            return "buy"
-        if fast_prev >= slow_prev and fast_now < slow_now and rsi_now >= self.rsi_sell_above:
-            return "sell"
-        return None
-
-    def stops(self, entry: float, atr: float):
-        sl = entry - self.sl_atr * atr
-        tp = entry + self.tp_rr * (entry - sl)
-        return max(0.0, sl), tp
 ```
 
 ---
